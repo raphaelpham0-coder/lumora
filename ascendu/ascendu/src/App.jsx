@@ -6,13 +6,46 @@ import {
 } from "firebase/firestore";
 
 /* ════════════════════════════════════════════════════════════════════════
-   AscendU — focus app where you grow an avatar of yourself.
-   Ported from StudyGrove's proven mechanics (timer, subjects, coins,
-   leaderboards, presence, badges, targets, weekly recap) with the tree
-   replaced by an evolving Scholar avatar, plus class codes (shared live
-   campus) and co-op focus rooms. Same Firebase patterns as StudyGrove so
-   it can fork or share a backend cleanly.
+   LUMORA — a focus app where your light grows as you study.
+   Built on AscendU's mechanics (timer, subjects, coins, leaderboards,
+   presence, badges, targets, weekly recap, an evolving avatar, class codes
+   and co-op focus rooms). Lumora gives it its own identity: an aurora
+   indigo→violet palette with a warm amber glow on a cool "dusk" surface,
+   rather than the forest-green look it was forked from.
    ════════════════════════════════════════════════════════════════════════ */
+
+// ── BRAND: Lumora ─────────────────────────────────────────────────────────────
+// Single source of truth for Lumora's look. Change values here to re-theme the
+// whole app. (NOTE: the ascendu_* storage keys below are intentionally left
+// unchanged — renaming them would sign every existing user out and lose their
+// saved data. The rebrand is visual, not a data migration.)
+const BRAND = {
+  name:     "Lumora",
+  logo:     "✦",
+  tagline:  "Focus, and let your light grow.",
+  // Core palette — aurora violet primary, warm amber accent
+  primary:  "#6C5CEF",   // main brand violet
+  primaryDk:"#5746C9",   // pressed / darker violet
+  primarySoft:"#EEEBFB", // tinted fills, active backgrounds
+  accent:   "#F5A623",   // warm amber glow (coins, highlights)
+  ink:      "#1E1B33",   // near-black indigo text
+  // Surfaces — cool light "dusk"
+  bg:       "#F5F4FC",   // app background
+  bgGrad:   "linear-gradient(165deg,#ECE9FB 0%,#F5F4FC 60%)",
+  surface:  "#FFFFFF",
+  border:   "#E7E4F4",   // soft borders
+  borderHi: "#D8D2EE",   // dashed / accent borders
+  track:    "#ECEAF8",   // progress-bar tracks
+  muted:    "#8B88A6",   // secondary text
+  mutedSoft:"#B4B1CC",   // faint text
+  // Coins keep a warm amber identity
+  coinText: "#B07A12",
+  coinBg:   "#FFF6E5",
+  coinBorder:"#F1D592",
+  // Status
+  live:     "#34C759",   // "focusing now" green dot
+  danger:   "#E0654F",   // give up / remove
+};
 
 // ── localStorage keys ─────────────────────────────────────────────────────────
 const LS_USER     = "ascendu_username";
@@ -667,7 +700,7 @@ function FocusingNow({ presence, currentUser, scopeLabel }) {
       </div>
       <div style={S.presenceRow}>
         {presence.map(p=>(
-          <div key={p.username} style={{...S.presenceChip, ...(p.username===currentUser?{borderColor:"#56B68B",background:"#F0FBF6"}:{})}}>
+          <div key={p.username} style={{...S.presenceChip, ...(p.username===currentUser?{borderColor:BRAND.primary,background:BRAND.primarySoft}:{})}}>
             <span style={{fontSize:15}}>{p.subjEmoji||"📚"}</span>
             <div style={{display:"flex",flexDirection:"column"}}>
               <span style={{fontSize:12,fontWeight:700,color:"#333"}}>{p.username}{p.username===currentUser?" (you)":""}</span>
@@ -701,7 +734,7 @@ function LeaderboardPanel({ data, currentUser, loading, subjects, title }) {
             <div style={{fontWeight:700,fontSize:14,color:"#333"}}>{r.username}{r.username===currentUser?" (you)":""}</div>
             <div style={{fontSize:11,color:"#999"}}>{r.sessions||0} sessions</div>
           </div>
-          <div style={{fontWeight:800,fontSize:15,color:"#2D6A4F"}}>{fmtMins(r.totalSecs||0)}</div>
+          <div style={{fontWeight:800,fontSize:15,color:BRAND.primary}}>{fmtMins(r.totalSecs||0)}</div>
         </div>
       ))}
     </div>
@@ -719,7 +752,7 @@ function ClassCampus({ cls, presence, board, currentUser, onLeave, loading }) {
     <div>
       <div style={S.campusHeader}>
         <div>
-          <div style={{fontSize:18,fontWeight:800,color:"#2D6A4F"}}>{cls.name}</div>
+          <div style={{fontSize:18,fontWeight:800,color:BRAND.primary}}>{cls.name}</div>
           <div style={{fontSize:12,color:"#888"}}>Code <b style={{letterSpacing:1}}>{cls.code}</b> · {members.length} members</div>
         </div>
         <button style={S.smallGhostBtn} onClick={onLeave}>Leave</button>
@@ -734,7 +767,7 @@ function ClassCampus({ cls, presence, board, currentUser, onLeave, loading }) {
           const lvl = levelFromXp(Math.floor(secs/60)); // rough display level from class focus
           const tier = tierForLevel(lvl).id;
           return (
-            <div key={u} style={{...S.campusTile,...(live?{borderColor:"#56B68B",boxShadow:"0 0 0 3px rgba(86,182,139,0.15)"}:{})}} className="sg-card-anim">
+            <div key={u} style={{...S.campusTile,...(live?{borderColor:BRAND.primary,boxShadow:`0 0 0 3px ${BRAND.primary}26`}:{})}} className="sg-card-anim">
               {live && <div style={S.campusLive}><span style={S.liveDot}/>focusing</div>}
               <AvatarSVG progress={live?0.8:0.55} tier={tier} idle={!live} color="#5B8DEF"/>
               <div style={{fontSize:13,fontWeight:700,color:"#333",marginTop:-6}}>{u}{u===currentUser?" (you)":""}</div>
@@ -810,7 +843,7 @@ function AnalyticsPanel({ user, subjects, targets }) {
           {bars.map((b,i)=>(
             <div key={i} style={S.barCol}>
               <div style={S.barTrack}>
-                <div style={{...S.barFill, height:`${(b.secs/maxBar)*100}%`, background: b.secs>0?"#56B68B":"#E8EDE4"}}/>
+                <div style={{...S.barFill, height:`${(b.secs/maxBar)*100}%`, background: b.secs>0?BRAND.primary:BRAND.track}}/>
               </div>
               <div style={S.barLbl}>{b.label}</div>
             </div>
@@ -892,9 +925,9 @@ function Login({ onAuth }) {
   return (
     <div style={S.loginWrap}>
       <div style={S.loginCard}>
-        <div style={{fontSize:40,marginBottom:4}}>🎓</div>
-        <div style={S.loginTitle}>AscendU</div>
-        <div style={S.loginSub}>Focus. Grow yourself. Climb together.</div>
+        <div style={{fontSize:42,marginBottom:4,color:BRAND.primary}}>{BRAND.logo}</div>
+        <div style={S.loginTitle}>{BRAND.name}</div>
+        <div style={S.loginSub}>{BRAND.tagline}</div>
 
         {mode==="signin" && <>
           <input style={S.input} placeholder="Username or email" value={username}
@@ -961,6 +994,7 @@ export default function App() {
 
   // ── UI state ──
   const [tab, setTab] = useState("focus"); // focus | classes | board | stats
+  const [editMode, setEditMode] = useState(false); // subject-edit mode (shows Remove)
   const [duration, setDuration] = useState(25*60);
   const [running, setRunning] = useState(false);
   const [paused, setPaused] = useState(false);
@@ -1291,7 +1325,7 @@ export default function App() {
 
         {/* ── Header ── */}
         <div style={S.header}>
-          <div style={S.logo}>🎓 AscendU</div>
+          <div style={S.logo}>{BRAND.logo} {BRAND.name}</div>
           <div style={{display:"flex",alignItems:"center",gap:6}}>
             <div style={S.coinChip}>🪙 {coins}</div>
             <button style={S.menuBtn} onClick={()=>setModal("menu")}>
@@ -1304,7 +1338,7 @@ export default function App() {
         {/* ── Level / XP bar ── */}
         <div style={S.xpWrap}>
           <div style={S.xpTop}>
-            <span style={{fontWeight:800,fontSize:13,color:"#2D6A4F"}}>Lv {level} · {tier.name}</span>
+            <span style={{fontWeight:800,fontSize:13,color:BRAND.primary}}>Lv {level} · {tier.name}</span>
             <span style={{fontSize:11,color:"#999"}}>{xpInfo.into}/{xpInfo.span} XP</span>
           </div>
           <div style={S.xpTrack}><div style={{...S.xpFill,width:`${xpInfo.pct*100}%`}}/></div>
@@ -1324,7 +1358,7 @@ export default function App() {
             {room && (
               <div style={S.roomBanner}>
                 <div>
-                  <div style={{fontSize:12,fontWeight:800,color:"#2D6A4F"}}>🤝 Co-op room {room.code}</div>
+                  <div style={{fontSize:12,fontWeight:800,color:BRAND.primary}}>🤝 Co-op room {room.code}</div>
                   <div style={{fontSize:11,color:"#888"}}>
                     {Object.values(room.participants||{}).filter(p=>p.focusing).length} focusing · {Object.keys(room.participants||{}).length} here
                   </div>
@@ -1343,17 +1377,32 @@ export default function App() {
 
             {/* Subject picker */}
             {!running && (
-              <div style={S.subjScroll}>
-                {subjects.map(s=>(
-                  <div key={s.id} style={{position:"relative",flexShrink:0}}>
-                    <button style={{...S.subjPill,...(subject===s.id?{borderColor:s.color,color:s.color,fontWeight:700}:{})}} onClick={()=>setSubject(s.id)}>
-                      <span style={{...S.subjDot,background:s.color}}/>{s.emoji} {s.label}
+              <>
+                <div style={S.subjHeader}>
+                  <span style={S.subjHeaderLabel}>Subject</span>
+                  {subjects.length>1 && (
+                    <button
+                      style={{...S.subjEditBtn,...(editMode?S.subjEditBtnActive:{})}}
+                      onClick={()=>setEditMode(e=>!e)}>
+                      {editMode?"Done":"Edit"}
                     </button>
-                    {subjects.length>1 && <button style={S.removeBadge} onClick={()=>removeSubject(s.id)}>×</button>}
-                  </div>
-                ))}
-                <button style={S.subjAddPill} onClick={()=>setModal("subject")}>＋ Subject</button>
-              </div>
+                  )}
+                </div>
+                <div style={S.subjScroll}>
+                  {subjects.map(s=>{
+                    const sel = subject===s.id;
+                    return (
+                      <button key={s.id}
+                        style={{...S.subjPill,...(sel?{borderColor:s.color,background:s.color+"14",color:s.color,fontWeight:700}:{})}}
+                        onClick={()=> editMode ? (subjects.length>1 && removeSubject(s.id)) : setSubject(s.id)}>
+                        <span style={{...S.subjDot,background:s.color}}/>{s.emoji} {s.label}
+                        {editMode && subjects.length>1 && <span style={S.subjRemoveInline}>Remove</span>}
+                      </button>
+                    );
+                  })}
+                  {!editMode && <button style={S.subjAddPill} onClick={()=>setModal("subject")}>＋ Subject</button>}
+                </div>
+              </>
             )}
 
             {/* Per-session class attribution — only when you belong to classes */}
@@ -1404,7 +1453,7 @@ export default function App() {
                 {mode==="stopwatch" ? (
                   <button style={{...S.plantBtn,flex:1,background:subjectObj.color}} onClick={()=>finishSession(elapsed)}>Finish</button>
                 ) : (
-                  <button style={{...S.plantBtn,flex:1,background:"#fff",color:"#E07B54",border:"1.5px solid #F0C9BC",boxShadow:"none"}}
+                  <button style={{...S.plantBtn,flex:1,background:"#fff",color:BRAND.danger,border:"1.5px solid #F0C9BC",boxShadow:"none"}}
                     onClick={()=>{ if(streakStakes && elapsed>=60){ if(window.confirm("Give up now? With streak stakes on, you'll lose some XP and your avatar shrinks back.")) cancelSession(); } else cancelSession(); }}>
                     {streakStakes ? "Give up ⚠️" : "Give up"}
                   </button>
@@ -1439,7 +1488,7 @@ export default function App() {
                     <span style={{fontSize:18,color:"#ccc"}}>›</span>
                   </button>
                 ))}
-                <button style={{...S.plantBtn,background:"#2D6A4F",marginTop:14}} onClick={()=>setModal("class")}>＋ Join or create a class</button>
+                <button style={{...S.plantBtn,background:BRAND.primary,marginTop:14}} onClick={()=>setModal("class")}>＋ Join or create a class</button>
               </>
             ) : (
               <ClassCampus cls={activeClass} presence={classPresence} board={classBoard}
@@ -1484,7 +1533,7 @@ export default function App() {
                     const isEquipped = avatar[slot.id]===c.id;
                     return (
                       <button key={c.id} className="sg-tap-card"
-                        style={{...S.shopCard,...(isEquipped?{borderColor:"#56B68B",background:"#F0FBF6"}:{})}}
+                        style={{...S.shopCard,...(isEquipped?{borderColor:BRAND.primary,background:BRAND.primarySoft}:{})}}
                         onClick={()=>buyCosmetic(c)}>
                         <div style={{fontSize:11,fontWeight:700,color:"#444",marginBottom:2}}>{c.name}</div>
                         {isEquipped ? <div style={S.shopTag}>Equipped</div> :
@@ -1537,7 +1586,7 @@ export default function App() {
             <button style={S.menuRow} onClick={()=>{ const v=!streakStakes; setStreakStakes(v); if(user) fbSavePrefs(user,{streakStakes:v}); }}>
               {streakStakes ? "🔥 Streak stakes: ON — giving up costs XP" : "🛡️ Streak stakes: OFF — no penalty"}
             </button>
-            <button style={{...S.menuRow,color:"#E07B54"}} onClick={logout}>↩ Sign out</button>
+            <button style={{...S.menuRow,color:BRAND.danger}} onClick={logout}>↩ Sign out</button>
           </Modal>
         )}
 
@@ -1557,15 +1606,15 @@ export default function App() {
         {modal==="levelup" && levelUpInfo && (
           <Modal onClose={()=>setModal(null)}>
             <div style={{textAlign:"center"}}>
-              <div style={{fontSize:13,fontWeight:700,letterSpacing:2,color:"#56B68B",textTransform:"uppercase"}}>
+              <div style={{fontSize:13,fontWeight:700,letterSpacing:2,color:BRAND.primary,textTransform:"uppercase"}}>
                 {levelUpInfo.evolved?"Evolution":"Level up"}
               </div>
-              <div style={{fontSize:32,fontWeight:900,color:"#2D6A4F",margin:"4px 0"}}>Level {levelUpInfo.level}</div>
+              <div style={{fontSize:32,fontWeight:900,color:BRAND.primary,margin:"4px 0"}}>Level {levelUpInfo.level}</div>
               <div style={{display:"flex",justifyContent:"center",margin:"8px 0"}}>
                 <AvatarSVG large progress={1} tier={tier.id} equipped={avatar} color={subjectObj.color} idle/>
               </div>
               {levelUpInfo.evolved && <div style={{fontSize:15,fontWeight:700,color:"#7B6FE0",marginBottom:6}}>You're now a {levelUpInfo.tierName} ✨</div>}
-              <button style={{...S.plantBtn,background:"#2D6A4F",marginTop:10}} onClick={()=>setModal(null)}>Keep going</button>
+              <button style={{...S.plantBtn,background:BRAND.primary,marginTop:10}} onClick={()=>setModal(null)}>Keep going</button>
             </div>
           </Modal>
         )}
@@ -1590,7 +1639,7 @@ function SubjectModal({ onClose, onAdd }) {
       <div style={{fontSize:12,fontWeight:600,color:"#888",margin:"10px 0 6px"}}>Color</div>
       <div style={S.pickGrid}>
         {COLOR_OPTIONS.map(c=>(
-          <button key={c} style={{...S.pickColor,background:c,...(color===c?{outline:"3px solid #2D6A4F",outlineOffset:2}:{})}} onClick={()=>setColor(c)}/>
+          <button key={c} style={{...S.pickColor,background:c,...(color===c?{outline:`3px solid ${BRAND.primary}`,outlineOffset:2}:{})}} onClick={()=>setColor(c)}/>
         ))}
       </div>
       <button style={{...S.plantBtn,background:color,marginTop:14}} disabled={!label.trim()} onClick={()=>label.trim()&&onAdd(label.trim(),emoji,color)}>Add subject</button>
@@ -1611,11 +1660,11 @@ function ClassModal({ onClose, onCreate, onJoin }) {
         <div style={S.recHint}>Enter the 6-character code your teacher or classmate shared.</div>
         <input style={{...S.input,textTransform:"uppercase",letterSpacing:3,textAlign:"center",fontWeight:700}}
                placeholder="ABC123" maxLength={6} value={code} onChange={e=>setCode(e.target.value)}/>
-        <button style={{...S.plantBtn,background:"#2D6A4F",marginTop:8}} disabled={code.length<6} onClick={()=>onJoin(code)}>Join class</button>
+        <button style={{...S.plantBtn,background:BRAND.primary,marginTop:8}} disabled={code.length<6} onClick={()=>onJoin(code)}>Join class</button>
       </> : <>
         <div style={S.recHint}>Name your class — you'll get a code to share.</div>
         <input style={S.input} placeholder="e.g. Year 12 Physics" value={name} onChange={e=>setName(e.target.value)}/>
-        <button style={{...S.plantBtn,background:"#2D6A4F",marginTop:8}} disabled={!name.trim()} onClick={()=>onCreate(name.trim())}>Create class</button>
+        <button style={{...S.plantBtn,background:BRAND.primary,marginTop:8}} disabled={!name.trim()} onClick={()=>onCreate(name.trim())}>Create class</button>
       </>}
     </Modal>
   );
@@ -1627,9 +1676,9 @@ function RoomModal({ room, onClose, onCreate, onJoin, onLeave }) {
   if(room) return (
     <Modal title={`Co-op room ${room.code}`} onClose={onClose}>
       <div style={S.recHint}>Share this code so classmates can focus alongside you. You'll see who's live on the Focus screen.</div>
-      <div style={{textAlign:"center",fontSize:28,fontWeight:900,letterSpacing:4,color:"#2D6A4F",margin:"6px 0"}}>{room.code}</div>
+      <div style={{textAlign:"center",fontSize:28,fontWeight:900,letterSpacing:4,color:BRAND.primary,margin:"6px 0"}}>{room.code}</div>
       <div style={{fontSize:12,color:"#888",textAlign:"center",marginBottom:12}}>{Object.keys(room.participants||{}).length} people here</div>
-      <button style={{...S.plantBtn,background:"#fff",color:"#E07B54",border:"1.5px solid #F0C9BC",boxShadow:"none"}} onClick={()=>{onLeave();onClose();}}>Leave room</button>
+      <button style={{...S.plantBtn,background:"#fff",color:BRAND.danger,border:"1.5px solid #F0C9BC",boxShadow:"none"}} onClick={()=>{onLeave();onClose();}}>Leave room</button>
     </Modal>
   );
   return (
@@ -1642,15 +1691,15 @@ function RoomModal({ room, onClose, onCreate, onJoin, onLeave }) {
         <div style={S.recHint}>Focus together in real time. Enter a room code.</div>
         <input style={{...S.input,textTransform:"uppercase",letterSpacing:3,textAlign:"center",fontWeight:700}}
                placeholder="ABC123" maxLength={6} value={code} onChange={e=>setCode(e.target.value)}/>
-        <button style={{...S.plantBtn,background:"#2D6A4F",marginTop:8}} disabled={code.length<6} onClick={()=>onJoin(code)}>Join room</button>
+        <button style={{...S.plantBtn,background:BRAND.primary,marginTop:8}} disabled={code.length<6} onClick={()=>onJoin(code)}>Join room</button>
       </> : <>
         <div style={S.recHint}>Pick a session length. Everyone in the room aims for the same goal.</div>
         <div style={S.durationRow}>
           {[15,25,45,60].map(m=>(
-            <button key={m} style={{...S.durBtn,...(goal===m?{...S.durBtnActive,borderColor:"#2D6A4F",color:"#2D6A4F"}:{})}} onClick={()=>setGoal(m)}>{m}m</button>
+            <button key={m} style={{...S.durBtn,...(goal===m?{...S.durBtnActive,borderColor:BRAND.primary,color:BRAND.primary}:{})}} onClick={()=>setGoal(m)}>{m}m</button>
           ))}
         </div>
-        <button style={{...S.plantBtn,background:"#2D6A4F",marginTop:8}} onClick={()=>onCreate(goal)}>Open room</button>
+        <button style={{...S.plantBtn,background:BRAND.primary,marginTop:8}} onClick={()=>onCreate(goal)}>Open room</button>
       </>}
     </Modal>
   );
@@ -1658,122 +1707,127 @@ function RoomModal({ room, onClose, onCreate, onJoin, onLeave }) {
 
 // ── Styles ────────────────────────────────────────────────────────────────────────
 const S = {
-  app:{minHeight:"100vh",background:"#F5F7F2",fontFamily:"'Inter','Segoe UI',sans-serif",maxWidth:440,margin:"0 auto",position:"relative",paddingBottom:30},
-  header:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"16px 16px 0"},
-  logo:{fontSize:17,fontWeight:800,color:"#2D6A4F",letterSpacing:"-0.3px"},
-  coinChip:{fontSize:12,color:"#B8860B",background:"#FFF8E7",border:"1px solid #F0D060",borderRadius:20,padding:"5px 10px",fontWeight:700},
-  menuBtn:{display:"flex",alignItems:"center",gap:6,background:"#fff",border:"1px solid #e0e0e0",borderRadius:20,padding:"3px 8px 3px 3px",cursor:"pointer"},
-  menuAvatar:{width:24,height:24,borderRadius:"50%",background:"#2D6A4F",color:"#fff",fontSize:11,fontWeight:700,display:"flex",alignItems:"center",justifyContent:"center"},
-  menuBars:{fontSize:14,color:"#888",lineHeight:1},
+  app:{minHeight:"100vh",background:BRAND.bg,fontFamily:"'Inter','Segoe UI',sans-serif",maxWidth:440,margin:"0 auto",position:"relative",paddingBottom:30},
+  header:{display:"flex",justifyContent:"space-between",alignItems:"center",padding:"18px 16px 0"},
+  logo:{fontSize:18,fontWeight:800,color:BRAND.primary,letterSpacing:"-0.3px",display:"flex",alignItems:"center",gap:6},
+  coinChip:{fontSize:12,color:BRAND.coinText,background:BRAND.coinBg,border:`1px solid ${BRAND.coinBorder}`,borderRadius:20,padding:"5px 11px",fontWeight:700},
+  menuBtn:{display:"flex",alignItems:"center",gap:6,background:BRAND.surface,border:`1px solid ${BRAND.border}`,borderRadius:20,padding:"3px 9px 3px 3px",cursor:"pointer"},
+  menuAvatar:{width:24,height:24,borderRadius:"50%",background:BRAND.primary,color:"#fff",fontSize:11,fontWeight:700,display:"flex",alignItems:"center",justifyContent:"center"},
+  menuBars:{fontSize:14,color:BRAND.muted,lineHeight:1},
 
-  xpWrap:{padding:"12px 16px 0"},
-  xpTop:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:5},
-  xpTrack:{height:8,background:"#E8EDE4",borderRadius:8,overflow:"hidden"},
-  xpFill:{height:"100%",borderRadius:8,background:"linear-gradient(90deg,#56B68B,#2D6A4F)",transition:"width 0.6s cubic-bezier(0.22,1,0.36,1)"},
+  xpWrap:{padding:"14px 16px 0"},
+  xpTop:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:6},
+  xpTrack:{height:8,background:BRAND.track,borderRadius:8,overflow:"hidden"},
+  xpFill:{height:"100%",borderRadius:8,background:`linear-gradient(90deg,${BRAND.accent},${BRAND.primary})`,transition:"width 0.6s cubic-bezier(0.22,1,0.36,1)"},
 
-  nav:{display:"flex",gap:4,padding:"12px",borderBottom:"1px solid #E8EDE4"},
-  navBtn:{flex:1,padding:"8px 0",border:"none",background:"transparent",borderRadius:10,fontSize:12,fontWeight:500,color:"#888",cursor:"pointer"},
-  navBtnActive:{background:"#fff",color:"#2D6A4F",fontWeight:700,boxShadow:"0 1px 4px rgba(0,0,0,0.08)"},
+  nav:{display:"flex",gap:4,padding:"14px 12px 12px",borderBottom:`1px solid ${BRAND.border}`},
+  navBtn:{flex:1,padding:"9px 0",border:"none",background:"transparent",borderRadius:11,fontSize:12,fontWeight:600,color:BRAND.muted,cursor:"pointer"},
+  navBtnActive:{background:BRAND.surface,color:BRAND.primary,fontWeight:800,boxShadow:`0 2px 10px ${BRAND.primary}22`},
 
-  timerView:{padding:"14px 16px 40px"},
-  modeRow:{display:"flex",gap:8,marginBottom:12},
-  modeBtn:{flex:1,padding:"9px 0",border:"1.5px solid #E0E8DC",background:"#fff",borderRadius:20,fontSize:13,fontWeight:500,color:"#888",cursor:"pointer"},
+  timerView:{padding:"16px 16px 40px"},
+  modeRow:{display:"flex",gap:8,marginBottom:14},
+  modeBtn:{flex:1,padding:"10px 0",border:`1.5px solid ${BRAND.border}`,background:BRAND.surface,borderRadius:20,fontSize:13,fontWeight:600,color:BRAND.muted,cursor:"pointer"},
   modeBtnActive:{fontWeight:700},
-  subjScroll:{display:"flex",gap:8,overflowX:"auto",paddingBottom:6,marginBottom:8,WebkitOverflowScrolling:"touch"},
+
+  subjHeader:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8},
+  subjHeaderLabel:{fontSize:11,fontWeight:800,color:BRAND.muted,textTransform:"uppercase",letterSpacing:"0.6px"},
+  subjEditBtn:{fontSize:11,fontWeight:700,color:BRAND.muted,background:BRAND.surface,border:`1.5px solid ${BRAND.border}`,borderRadius:16,padding:"4px 12px",cursor:"pointer"},
+  subjEditBtnActive:{color:BRAND.danger,borderColor:BRAND.danger,background:"#FCEEEA"},
+  subjScroll:{display:"flex",gap:8,overflowX:"auto",paddingBottom:6,marginBottom:10,WebkitOverflowScrolling:"touch"},
   classPickRow:{display:"flex",alignItems:"center",gap:6,overflowX:"auto",paddingBottom:6,marginBottom:8,WebkitOverflowScrolling:"touch"},
-  classPickLabel:{fontSize:11,fontWeight:700,color:"#aaa",whiteSpace:"nowrap",flexShrink:0,textTransform:"uppercase",letterSpacing:"0.5px"},
-  classPickChip:{padding:"6px 12px",border:"1.5px solid #E0E8DC",background:"#fff",borderRadius:18,fontSize:12,fontWeight:600,color:"#888",cursor:"pointer",whiteSpace:"nowrap",flexShrink:0},
-  classPickChipActive:{borderColor:"#2D6A4F",background:"#EAF6F0",color:"#2D6A4F"},
-  subjPill:{display:"flex",alignItems:"center",gap:6,padding:"9px 14px",border:"1.5px solid #E0E8DC",background:"#fff",borderRadius:22,cursor:"pointer",color:"#666",fontWeight:500,whiteSpace:"nowrap"},
+  classPickLabel:{fontSize:11,fontWeight:700,color:BRAND.mutedSoft,whiteSpace:"nowrap",flexShrink:0,textTransform:"uppercase",letterSpacing:"0.5px"},
+  classPickChip:{padding:"6px 13px",border:`1.5px solid ${BRAND.border}`,background:BRAND.surface,borderRadius:18,fontSize:12,fontWeight:600,color:BRAND.muted,cursor:"pointer",whiteSpace:"nowrap",flexShrink:0},
+  classPickChipActive:{borderColor:BRAND.primary,background:BRAND.primarySoft,color:BRAND.primary},
+  subjPill:{display:"flex",alignItems:"center",gap:6,padding:"10px 15px",border:`1.5px solid ${BRAND.border}`,background:BRAND.surface,borderRadius:22,cursor:"pointer",color:BRAND.muted,fontWeight:600,whiteSpace:"nowrap",flexShrink:0,transition:"all 0.15s"},
   subjDot:{width:8,height:8,borderRadius:"50%",flexShrink:0},
-  subjAddPill:{display:"flex",alignItems:"center",padding:"9px 14px",border:"1.5px dashed #C8D8C4",background:"transparent",borderRadius:22,cursor:"pointer",color:"#7AA56B",fontWeight:600,whiteSpace:"nowrap",flexShrink:0},
-  removeBadge:{position:"absolute",top:-5,right:-5,width:18,height:18,borderRadius:"50%",background:"#E07B54",color:"#fff",border:"none",fontSize:11,fontWeight:700,cursor:"pointer",lineHeight:1,padding:0},
+  subjRemoveInline:{marginLeft:4,fontSize:11,fontWeight:800,color:BRAND.danger,letterSpacing:"0.3px"},
+  subjAddPill:{display:"flex",alignItems:"center",padding:"10px 15px",border:`1.5px dashed ${BRAND.borderHi}`,background:"transparent",borderRadius:22,cursor:"pointer",color:BRAND.primary,fontWeight:700,whiteSpace:"nowrap",flexShrink:0},
 
-  avatarWrap:{display:"flex",justifyContent:"center",alignItems:"flex-end",minHeight:260,margin:"4px 0"},
+  avatarWrap:{display:"flex",justifyContent:"center",alignItems:"flex-end",minHeight:260,margin:"6px 0"},
   timerDisplay:{textAlign:"center",fontSize:48,fontWeight:800,letterSpacing:"-2px",margin:"0 0 4px"},
-  timerLabel:{textAlign:"center",fontSize:13,color:"#888",marginBottom:14,minHeight:18},
+  timerLabel:{textAlign:"center",fontSize:13,color:BRAND.muted,marginBottom:14,minHeight:18},
   durationRow:{display:"flex",gap:6,justifyContent:"center",marginBottom:14,flexWrap:"wrap"},
-  durBtn:{padding:"7px 12px",border:"1.5px solid #dde",background:"#fff",borderRadius:20,fontSize:13,fontWeight:500,cursor:"pointer",color:"#666"},
+  durBtn:{padding:"7px 13px",border:`1.5px solid ${BRAND.border}`,background:BRAND.surface,borderRadius:20,fontSize:13,fontWeight:600,cursor:"pointer",color:BRAND.muted},
   durBtnActive:{fontWeight:700},
-  plantBtn:{display:"block",width:"100%",padding:"16px 0",border:"none",borderRadius:16,fontSize:16,fontWeight:800,color:"#fff",cursor:"pointer",boxShadow:"0 4px 20px rgba(0,0,0,0.15)",letterSpacing:"-0.3px"},
-  quickRow:{display:"flex",gap:8,marginTop:14},
-  quickBtn:{flex:1,padding:"11px 0",border:"1.5px solid #E0E8DC",background:"#fff",borderRadius:12,fontSize:12,fontWeight:600,color:"#666",cursor:"pointer"},
+  plantBtn:{display:"block",width:"100%",padding:"16px 0",border:"none",borderRadius:16,fontSize:16,fontWeight:800,color:"#fff",cursor:"pointer",boxShadow:`0 6px 22px ${BRAND.primary}33`,letterSpacing:"-0.3px"},
+  quickRow:{display:"flex",gap:8,marginTop:16},
+  quickBtn:{flex:1,padding:"12px 0",border:`1.5px solid ${BRAND.border}`,background:BRAND.surface,borderRadius:12,fontSize:12,fontWeight:700,color:BRAND.muted,cursor:"pointer"},
 
-  roomBanner:{display:"flex",justifyContent:"space-between",alignItems:"center",background:"#EAF6F0",border:"1.5px solid #BFE3D2",borderRadius:14,padding:"10px 14px",marginBottom:12},
-  smallGhostBtn:{background:"#fff",border:"1px solid #e0e0e0",borderRadius:16,padding:"6px 12px",fontSize:12,fontWeight:600,color:"#888",cursor:"pointer"},
+  roomBanner:{display:"flex",justifyContent:"space-between",alignItems:"center",background:BRAND.primarySoft,border:`1.5px solid ${BRAND.borderHi}`,borderRadius:14,padding:"11px 14px",marginBottom:12},
+  smallGhostBtn:{background:BRAND.surface,border:`1px solid ${BRAND.border}`,borderRadius:16,padding:"6px 13px",fontSize:12,fontWeight:700,color:BRAND.muted,cursor:"pointer"},
 
-  boardView:{padding:"16px 16px 40px"},
-  sectionTitle:{fontSize:13,fontWeight:800,color:"#888",textTransform:"uppercase",letterSpacing:"0.5px",marginBottom:12},
+  boardView:{padding:"18px 16px 40px"},
+  sectionTitle:{fontSize:13,fontWeight:800,color:BRAND.muted,textTransform:"uppercase",letterSpacing:"0.5px",marginBottom:12},
   toggleRow:{display:"flex",gap:8,marginBottom:14},
-  toggleBtn:{flex:1,padding:"9px 0",border:"1.5px solid #E0E8DC",background:"#fff",borderRadius:10,fontSize:13,fontWeight:500,color:"#888",cursor:"pointer"},
-  toggleBtnActive:{background:"#2D6A4F",color:"#fff",border:"1.5px solid #2D6A4F",fontWeight:700},
-  boardRow:{display:"flex",alignItems:"center",gap:8,background:"#fff",borderRadius:12,padding:"12px 14px",marginBottom:8,boxShadow:"0 1px 3px rgba(0,0,0,0.05)"},
-  boardRowMe:{border:"2px solid #56B68B",background:"#F0FBF6"},
+  toggleBtn:{flex:1,padding:"10px 0",border:`1.5px solid ${BRAND.border}`,background:BRAND.surface,borderRadius:11,fontSize:13,fontWeight:600,color:BRAND.muted,cursor:"pointer"},
+  toggleBtnActive:{background:BRAND.primary,color:"#fff",border:`1.5px solid ${BRAND.primary}`,fontWeight:700},
+  boardRow:{display:"flex",alignItems:"center",gap:8,background:BRAND.surface,borderRadius:14,padding:"13px 15px",marginBottom:8,boxShadow:"0 1px 4px rgba(30,27,51,0.05)"},
+  boardRowMe:{border:`2px solid ${BRAND.primary}`,background:BRAND.primarySoft},
   boardRank:{width:30,fontSize:17,textAlign:"center"},
-  empty:{textAlign:"center",color:"#aaa",fontSize:14,marginTop:30,marginBottom:20,lineHeight:1.5},
+  empty:{textAlign:"center",color:BRAND.mutedSoft,fontSize:14,marginTop:30,marginBottom:20,lineHeight:1.5},
 
   // presence
-  presenceWrap:{background:"#fff",borderRadius:14,padding:"12px 14px",boxShadow:"0 1px 3px rgba(0,0,0,0.05)"},
-  presenceEmpty:{display:"flex",flexDirection:"column",gap:4,background:"#fff",borderRadius:14,padding:"16px 14px",textAlign:"center",color:"#888",boxShadow:"0 1px 3px rgba(0,0,0,0.05)"},
-  presenceTitle:{display:"flex",alignItems:"center",gap:6,fontSize:12,fontWeight:800,color:"#2D6A4F",marginBottom:10,textTransform:"uppercase",letterSpacing:"0.5px"},
+  presenceWrap:{background:BRAND.surface,borderRadius:16,padding:"13px 15px",boxShadow:"0 1px 4px rgba(30,27,51,0.05)"},
+  presenceEmpty:{display:"flex",flexDirection:"column",gap:4,background:BRAND.surface,borderRadius:16,padding:"16px 14px",textAlign:"center",color:BRAND.muted,boxShadow:"0 1px 4px rgba(30,27,51,0.05)"},
+  presenceTitle:{display:"flex",alignItems:"center",gap:6,fontSize:12,fontWeight:800,color:BRAND.primary,marginBottom:10,textTransform:"uppercase",letterSpacing:"0.5px"},
   presenceRow:{display:"flex",gap:8,overflowX:"auto",paddingBottom:4},
-  presenceChip:{display:"flex",alignItems:"center",gap:8,background:"#F8FAF7",border:"1.5px solid #E8EDE4",borderRadius:14,padding:"8px 12px",flexShrink:0},
-  liveDot:{width:8,height:8,borderRadius:"50%",background:"#34C759",boxShadow:"0 0 0 0 rgba(52,199,89,0.5)",animation:"sgpulse 2s infinite",display:"inline-block"},
+  presenceChip:{display:"flex",alignItems:"center",gap:8,background:BRAND.bg,border:`1.5px solid ${BRAND.border}`,borderRadius:14,padding:"8px 12px",flexShrink:0},
+  liveDot:{width:8,height:8,borderRadius:"50%",background:BRAND.live,boxShadow:"0 0 0 0 rgba(52,199,89,0.5)",animation:"sgpulse 2s infinite",display:"inline-block"},
 
   // class campus
   campusHeader:{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:16},
   campusGrid:{display:"grid",gridTemplateColumns:"repeat(2,1fr)",gap:10},
-  campusTile:{display:"flex",flexDirection:"column",alignItems:"center",background:"#fff",borderRadius:16,padding:"10px 8px 12px",border:"2px solid #E8EDE4",position:"relative",boxShadow:"0 1px 3px rgba(0,0,0,0.05)"},
-  campusLive:{position:"absolute",top:8,left:8,display:"flex",alignItems:"center",gap:4,fontSize:10,fontWeight:700,color:"#34C759"},
-  classCard:{display:"flex",justifyContent:"space-between",alignItems:"center",width:"100%",background:"#fff",border:"1.5px solid #E8EDE4",borderRadius:14,padding:"14px 16px",marginBottom:8,cursor:"pointer"},
+  campusTile:{display:"flex",flexDirection:"column",alignItems:"center",background:BRAND.surface,borderRadius:16,padding:"10px 8px 12px",border:`2px solid ${BRAND.border}`,position:"relative",boxShadow:"0 1px 4px rgba(30,27,51,0.05)"},
+  campusLive:{position:"absolute",top:8,left:8,display:"flex",alignItems:"center",gap:4,fontSize:10,fontWeight:700,color:BRAND.live},
+  classCard:{display:"flex",justifyContent:"space-between",alignItems:"center",width:"100%",background:BRAND.surface,border:`1.5px solid ${BRAND.border}`,borderRadius:14,padding:"14px 16px",marginBottom:8,cursor:"pointer"},
 
   // analytics
   statCardRow:{display:"flex",gap:8,marginBottom:14},
-  statCard:{flex:1,background:"#fff",borderRadius:14,padding:"14px 8px",textAlign:"center",boxShadow:"0 1px 3px rgba(0,0,0,0.05)"},
-  statNum:{fontSize:20,fontWeight:900,color:"#2D6A4F"},
-  statLbl:{fontSize:11,color:"#999",marginTop:2},
-  panel:{background:"#fff",borderRadius:16,padding:"14px",marginBottom:14,boxShadow:"0 1px 3px rgba(0,0,0,0.05)"},
-  panelTitle:{fontSize:13,fontWeight:700,color:"#555",marginBottom:12},
+  statCard:{flex:1,background:BRAND.surface,borderRadius:16,padding:"14px 8px",textAlign:"center",boxShadow:"0 1px 4px rgba(30,27,51,0.05)"},
+  statNum:{fontSize:20,fontWeight:900,color:BRAND.primary},
+  statLbl:{fontSize:11,color:BRAND.muted,marginTop:2},
+  panel:{background:BRAND.surface,borderRadius:18,padding:"15px",marginBottom:14,boxShadow:"0 1px 4px rgba(30,27,51,0.05)"},
+  panelTitle:{fontSize:13,fontWeight:700,color:BRAND.ink,marginBottom:12},
   barRow:{display:"flex",justifyContent:"space-between",alignItems:"flex-end",height:110,gap:6},
   barCol:{flex:1,display:"flex",flexDirection:"column",alignItems:"center",height:"100%"},
   barTrack:{flex:1,width:"100%",display:"flex",alignItems:"flex-end",justifyContent:"center"},
   barFill:{width:"70%",borderRadius:"6px 6px 0 0",minHeight:3,transition:"height 0.5s ease"},
-  barLbl:{fontSize:10,color:"#aaa",marginTop:6},
-  targetTrack:{height:7,background:"#EEF2EC",borderRadius:8,overflow:"hidden"},
+  barLbl:{fontSize:10,color:BRAND.mutedSoft,marginTop:6},
+  targetTrack:{height:7,background:BRAND.track,borderRadius:8,overflow:"hidden"},
   targetFill:{height:"100%",borderRadius:8,transition:"width 0.5s ease"},
 
   // modal
-  overlay:{position:"fixed",inset:0,background:"rgba(20,30,25,0.45)",display:"flex",alignItems:"center",justifyContent:"center",padding:18,zIndex:300},
-  modal:{background:"#fff",borderRadius:22,padding:"22px 20px",width:"100%",maxWidth:380,maxHeight:"86vh",overflowY:"auto",boxShadow:"0 12px 40px rgba(0,0,0,0.2)"},
-  modalTitle:{fontSize:18,fontWeight:800,color:"#2D6A4F",marginBottom:16,textAlign:"center"},
-  menuRow:{display:"block",width:"100%",textAlign:"left",background:"#F8FAF7",border:"1.5px solid #E8EDE4",borderRadius:12,padding:"13px 16px",fontSize:14,fontWeight:600,color:"#555",cursor:"pointer",marginBottom:8},
+  overlay:{position:"fixed",inset:0,background:"rgba(30,27,51,0.5)",display:"flex",alignItems:"center",justifyContent:"center",padding:18,zIndex:300},
+  modal:{background:BRAND.surface,borderRadius:24,padding:"24px 20px",width:"100%",maxWidth:380,maxHeight:"86vh",overflowY:"auto",boxShadow:"0 16px 48px rgba(30,27,51,0.25)"},
+  modalTitle:{fontSize:18,fontWeight:800,color:BRAND.primary,marginBottom:16,textAlign:"center"},
+  menuRow:{display:"block",width:"100%",textAlign:"left",background:BRAND.bg,border:`1.5px solid ${BRAND.border}`,borderRadius:12,padding:"13px 16px",fontSize:14,fontWeight:600,color:BRAND.ink,cursor:"pointer",marginBottom:8},
 
   // shop
-  shopSlotTitle:{fontSize:12,fontWeight:800,color:"#888",textTransform:"uppercase",letterSpacing:"0.5px",marginBottom:8},
+  shopSlotTitle:{fontSize:12,fontWeight:800,color:BRAND.muted,textTransform:"uppercase",letterSpacing:"0.5px",marginBottom:8},
   shopGrid:{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:8},
-  shopCard:{display:"flex",flexDirection:"column",alignItems:"center",gap:4,background:"#fff",border:"1.5px solid #E8EDE4",borderRadius:12,padding:"10px 6px",cursor:"pointer"},
-  shopTag:{fontSize:10,fontWeight:700,padding:"2px 8px",borderRadius:10,background:"#EAF6F0",color:"#2D6A4F"},
+  shopCard:{display:"flex",flexDirection:"column",alignItems:"center",gap:4,background:BRAND.surface,border:`1.5px solid ${BRAND.border}`,borderRadius:12,padding:"10px 6px",cursor:"pointer"},
+  shopTag:{fontSize:10,fontWeight:700,padding:"2px 8px",borderRadius:10,background:BRAND.primarySoft,color:BRAND.primary},
 
   // badges
   badgeGrid:{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:10},
-  badgeCard:{display:"flex",flexDirection:"column",alignItems:"center",gap:4,background:"#F8FAF7",borderRadius:14,padding:"12px 6px"},
+  badgeCard:{display:"flex",flexDirection:"column",alignItems:"center",gap:4,background:BRAND.bg,borderRadius:14,padding:"12px 6px"},
 
   // pickers
   pickGrid:{display:"flex",flexWrap:"wrap",gap:6},
-  pickEmoji:{width:40,height:40,border:"1.5px solid #E8EDE4",background:"#fff",borderRadius:10,fontSize:18,cursor:"pointer"},
+  pickEmoji:{width:40,height:40,border:`1.5px solid ${BRAND.border}`,background:BRAND.surface,borderRadius:10,fontSize:18,cursor:"pointer"},
   pickColor:{width:34,height:34,border:"none",borderRadius:"50%",cursor:"pointer"},
 
   // login
-  loginWrap:{minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",background:"linear-gradient(160deg,#D8F0E0 0%,#F5F7F2 60%)",padding:20},
-  loginCard:{background:"#fff",borderRadius:24,padding:"38px 30px",width:"100%",maxWidth:340,boxShadow:"0 8px 32px rgba(45,106,79,0.12)",textAlign:"center"},
-  loginTitle:{fontSize:28,fontWeight:900,color:"#2D6A4F",margin:"0 0 4px",letterSpacing:"-0.5px"},
-  loginSub:{fontSize:14,color:"#888",margin:"0 0 22px"},
-  loginHint:{fontSize:11,color:"#bbb",margin:"12px 0 0",lineHeight:1.6},
-  input:{display:"block",width:"100%",padding:"12px 14px",border:"1.5px solid #E0E8DC",borderRadius:12,fontSize:15,outline:"none",boxSizing:"border-box",marginBottom:8},
-  errText:{color:"#E07B54",fontSize:12,margin:"0 0 8px",textAlign:"left"},
-  primaryBtn:{display:"block",width:"100%",padding:"14px 0",background:"#2D6A4F",color:"#fff",border:"none",borderRadius:14,fontSize:16,fontWeight:700,cursor:"pointer",marginTop:8},
-  linkBtn:{display:"block",width:"100%",background:"none",border:"none",color:"#56B68B",fontSize:13,fontWeight:600,cursor:"pointer",marginTop:12,padding:"4px 0"},
-  recBox:{background:"#F6FAF5",border:"1px solid #E0E8DC",borderRadius:12,padding:"12px",margin:"4px 0 8px",textAlign:"left"},
-  recHint:{fontSize:12,color:"#888",margin:"0 0 8px",lineHeight:1.5},
-  toast:{position:"fixed",top:20,left:"50%",transform:"translateX(-50%)",background:"#1a1a2e",color:"#fff",padding:"10px 20px",borderRadius:24,fontSize:13,fontWeight:600,boxShadow:"0 4px 16px rgba(0,0,0,0.2)",zIndex:400,maxWidth:"90%",textAlign:"center"},
-};
+  loginWrap:{minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",background:BRAND.bgGrad,padding:20},
+  loginCard:{background:BRAND.surface,borderRadius:26,padding:"40px 30px",width:"100%",maxWidth:340,boxShadow:`0 10px 40px ${BRAND.primary}1F`,textAlign:"center"},
+  loginTitle:{fontSize:30,fontWeight:900,color:BRAND.primary,margin:"0 0 4px",letterSpacing:"-0.5px"},
+  loginSub:{fontSize:14,color:BRAND.muted,margin:"0 0 24px"},
+  loginHint:{fontSize:11,color:BRAND.mutedSoft,margin:"12px 0 0",lineHeight:1.6},
+  input:{display:"block",width:"100%",padding:"12px 14px",border:`1.5px solid ${BRAND.border}`,borderRadius:12,fontSize:15,outline:"none",boxSizing:"border-box",marginBottom:8},
+  errText:{color:BRAND.danger,fontSize:12,margin:"0 0 8px",textAlign:"left"},
+  primaryBtn:{display:"block",width:"100%",padding:"14px 0",background:BRAND.primary,color:"#fff",border:"none",borderRadius:14,fontSize:16,fontWeight:700,cursor:"pointer",marginTop:8},
+  linkBtn:{display:"block",width:"100%",background:"none",border:"none",color:BRAND.primary,fontSize:13,fontWeight:600,cursor:"pointer",marginTop:12,padding:"4px 0"},
+  recBox:{background:BRAND.bg,border:`1px solid ${BRAND.border}`,borderRadius:12,padding:"12px",margin:"4px 0 8px",textAlign:"left"},
+  recHint:{fontSize:12,color:BRAND.muted,margin:"0 0 8px",lineHeight:1.5},
+  toast:{position:"fixed",top:20,left:"50%",transform:"translateX(-50%)",background:BRAND.ink,color:"#fff",padding:"10px 20px",borderRadius:24,fontSize:13,fontWeight:600,boxShadow:"0 4px 16px rgba(30,27,51,0.3)",zIndex:400,maxWidth:"90%",textAlign:"center"},
+
