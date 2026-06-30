@@ -1,0 +1,82 @@
+rules_version = '2';
+
+// AscendU Firestore security rules.
+//
+// Identity model: the app's public key is a *username*, mapped to a Firebase
+// Auth uid via the `usernames/{username}` document. Most collections are keyed
+// by username. Because rules can't cheaply reverse username→uid on every write,
+// these rules require the caller to be signed in and apply per-document checks
+// where ownership is provable. Tighten further before a public launch — see the
+// notes inline.
+//
+// Deploy: `firebase deploy --only firestore:rules`
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() { return request.auth != null; }
+
+    // Username reservations: anyone signed in can read (to resolve names), but a
+    // username doc can only be created by its owner and never reassigned.
+    match /usernames/{username} {
+      allow read: if signedIn();
+      allow create: if signedIn()
+                    && request.resource.data.uid == request.auth.uid;
+      allow update, delete: if signedIn()
+                    && resource.data.uid == request.auth.uid;
+    }
+
+    // Per-user preferences. We store the owner uid on the doc and check it.
+    // (App writes prefs under the username id; the `ownerUid` field is the guard.)
+    match /prefs/{username} {
+      allow read: if signedIn();
+      allow write: if signedIn()
+                   && (!('ownerUid' in resource.data) || resource.data.ownerUid == request.auth.uid)
+                   && (!('ownerUid' in request.resource.data) || request.resource.data.ownerUid == request.auth.uid);
+    }
+
+    // Personal session history.
+    match /history/{username} {
+      allow read: if signedIn();
+      allow write: if signedIn();
+    }
+
+    // Leaderboards & class boards: readable by all signed-in users.
+    //
+    // The client has a dev fallback that writes these directly, but the trusted
+    // path is the `recordSession` Cloud Function (runs as admin, bypasses rules).
+    // ONCE THE FUNCTION IS DEPLOYED, change the write rule below to `if false`
+    // so only the function can write totals — this is what stops score tampering.
+    match /leaderboard_weekly/{doc} {
+      allow read: if signedIn();
+      allow write: if signedIn();   // → change to `if false` after deploying functions
+    }
+    match /leaderboard_alltime/{doc} {
+      allow read: if signedIn();
+      allow write: if signedIn();   // → change to `if false` after deploying functions
+    }
+    match /class_boards/{doc} {
+      allow read: if signedIn();
+      allow write: if signedIn();   // → change to `if false` after deploying functions
+    }
+
+    // Live presence: readable by all signed-in users; each person writes their
+    // own presence doc (id == their username).
+    match /presence/{username} {
+      allow read: if signedIn();
+      allow write: if signedIn();
+    }
+
+    // Classes: signed-in users can read, create, and join (members arrayUnion).
+    match /classes/{code} {
+      allow read: if signedIn();
+      allow create, update: if signedIn();
+      allow delete: if signedIn() && resource.data.owner != null;
+    }
+
+    // Co-op rooms: ephemeral; signed-in users can read/write while a room lives.
+    match /rooms/{code} {
+      allow read, write: if signedIn();
+    }
+  }
+}
