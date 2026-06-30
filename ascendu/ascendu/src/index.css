@@ -1,0 +1,27 @@
+/* AscendU global styles — minimal reset + system layout.
+   App-specific styling lives inline in App.jsx (the S styles object). */
+
+* { box-sizing: border-box; }
+
+html, body, #root {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+}
+
+body {
+  font-family: 'Inter', 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: #F5F7F2;
+  color: #333;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  /* Respect iOS safe areas when wrapped as a native/PWA app */
+  padding: env(safe-area-inset-top) env(safe-area-inset-right)
+           env(safe-area-inset-bottom) env(safe-area-inset-left);
+}
+
+/* Prevent text selection flicker on rapid taps */
+button { font-family: inherit; }
+
+/* Honour dark mode at the document level too */
+[data-theme="dark"] body { background: #20251f; }
